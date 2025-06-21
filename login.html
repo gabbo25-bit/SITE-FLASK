@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4">Login</h1>
+    <form method="POST">
+        <div class="mb-3">
+            <label for="username" class="form-label">Username:</label>
+            <input type="text" class="form-control" id="username" name="username" required>
+        </div>
+        <div class="mb-3">
+            <label for="password" class="form-label">Password:</label>
+            <input type="password" class="form-control" id="password" name="password" required>
+        </div>
+        <div class="form-check mb-3">
+            <input type="checkbox" class="form-check-input" id="remember_me" name="remember_me">
+            <label class="form-check-label" for="remember_me">Ricordami</label>
+        </div>
+        <button type="submit" class="btn btn-primary">Accedi</button>
+        <a href="{{ url_for('register') }}" class="btn btn-secondary ms-2">Non hai un account? Registrati!</a>
+    </form>
+{% endblock %}

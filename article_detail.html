@@ -1,0 +1,146 @@
+{# templates/article_detail.html (AGGIORNARE LA SEZIONE SOTTO IL CONTENUTO DELL'ARTICOLO) #}
+
+{% extends 'base.html' %}
+
+{% block title %}{{ article.title }}{% endblock %}
+
+{% block content %}
+    <h1 class="mb-3">{{ article.title }}</h1>
+    <p class="text-muted"><small>Pubblicato il: {{ article.pub_date.strftime('%d/%m/%Y alle %H:%M') }}</small></p>
+    <p class="text-muted">
+        <small>
+            Di
+            {% if article.author.profile_picture %}
+                <img src="{{ url_for('static', filename='uploads/' + article.author.profile_picture) }}" alt="Foto Profilo" class="rounded-circle me-1" style="width: 25px; height: 25px; object-fit: cover;">
+            {% else %}
+                <img src="{{ url_for('static', filename='default_profile.png') }}" alt="Foto Profilo di default" class="rounded-circle me-1" style="width: 25px; height: 25px; object-fit: cover;">
+            {% endif %}
+            <a href="{{ url_for('user_profile', username=article.author.username) }}">{{ article.author.username }}</a>
+        </small>
+    </p>
+
+    {% if article.image_filename %}
+        <div class="text-center mb-4">
+            <img src="{{ url_for('static', filename='uploads/' + article.image_filename) }}" class="img-fluid rounded" alt="{{ article.title }}" style="max-height: 400px; object-fit: contain;">
+        </div>
+    {% endif %}
+
+    <div class="card card-body mb-4">
+        <p class="card-text">{{ article.content | safe }}</p>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <p class="text-muted mb-0"><small>Visualizzazioni: {{ article.views }}</small></p>
+
+        {# Sezione Mi Piace #}
+        {% if current_user.is_authenticated %}
+            <button
+                class="btn {% if current_user in article.likes|map(attribute='user')|list %}btn-danger{% else %}btn-outline-danger{% endif %} btn-sm"
+                id="like-button"
+                data-article-id="{{ article.id }}"
+            >
+                <i class="bi bi-heart-fill"></i> Mi Piace
+            </button>
+        {% else %}
+            <small class="text-muted">Accedi per mettere Mi Piace</small>
+        {% endif %}
+        <span id="likes-count" class="badge bg-secondary ms-2">{{ article.likes|length }} Mi Piace</span>
+    </div>
+
+    {% if current_user.is_authenticated and (current_user == article.author or current_user.is_admin) %}
+        <a href="{{ url_for('edit_article', article_id=article.id) }}" class="btn btn-warning me-2">Modifica Articolo</a>
+        <form action="{{ url_for('delete', article_id=article.id) }}" method="POST" onsubmit="return confirm('Sei sicuro di voler eliminare questo articolo e la sua immagine?');" class="d-inline">
+            <button type="submit" class="btn btn-danger">Elimina Articolo</button>
+        </form>
+    {% endif %}
+
+    ---
+
+    <h3 class="mt-5 mb-3">Commenti ({{ article.comments|length }})</h3>
+
+    {# Form per Aggiungere Commenti #}
+    {% if current_user.is_authenticated %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Lascia un commento</h5>
+            <form action="{{ url_for('add_comment', article_id=article.id) }}" method="POST">
+                <div class="mb-3">
+                    <textarea class="form-control" id="comment_text" name="comment_text" rows="3" placeholder="Scrivi il tuo commento qui..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-success">Invia Commento</button>
+            </form>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info" role="alert">
+        <a href="{{ url_for('login') }}">Accedi</a> per lasciare un commento.
+    </div>
+    {% endif %}
+
+    {# Lista dei Commenti #}
+{% if article.comments %}
+    <div class="list-group">
+        {% for comment in article.comments|sort(attribute='pub_date', reverse=True) %}
+            <div class="list-group-item mb-2">
+                <div class="d-flex w-100 justify-content-between">
+                    <h6 class="mb-1">
+                        {% if comment.comment_author.profile_picture %} {# <-- CORRETTO #}
+                            <img src="{{ url_for('static', filename='uploads/' + comment.comment_author.profile_picture) }}" alt="Foto Profilo" class="rounded-circle me-1" style="width: 20px; height: 20px; object-fit: cover;">
+                        {% else %}
+                            <img src="{{ url_for('static', filename='default_profile.png') }}" alt="Foto Profilo di default" class="rounded-circle me-1" style="width: 20px; height: 20px; object-fit: cover;">
+                        {% endif %}
+                        <a href="{{ url_for('user_profile', username=comment.comment_author.username) }}" class="text-decoration-none">{{ comment.comment_author.username }}</a> {# <-- CORRETTO #}
+                    </h6>
+                    <small class="text-muted">{{ comment.pub_date.strftime('%d/%m/%Y alle %H:%M') }}</small>
+                </div>
+                <p class="mb-1">{{ comment.text }}</p>
+                {% if current_user.is_authenticated and (current_user == comment.comment_author or current_user.is_admin) %} {# <-- CORRETTO #}
+                    <form action="{{ url_for('delete_comment', comment_id=comment.id) }}" method="POST" onsubmit="return confirm('Sei sicuro di voler eliminare questo commento?');" class="d-inline">
+                        <button type="submit" class="btn btn-sm btn-outline-danger mt-1">Elimina</button>
+                    </form>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="text-muted">Nessun commento ancora. Sii il primo a commentare!</p>
+{% endif %}
+
+    <a href="{{ url_for('index') }}" class="btn btn-secondary mt-4">Torna alla lista</a>
+
+    {# Script JavaScript per il Mi Piace #}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const likeButton = document.getElementById('like-button');
+            const likesCountSpan = document.getElementById('likes-count');
+
+            if (likeButton) {
+                likeButton.addEventListener('click', function() {
+                    const articleId = this.dataset.articleId; // Recupera l'ID dell'articolo
+                    fetch(`/toggle_like/${articleId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'liked') {
+                            likeButton.classList.remove('btn-outline-danger');
+                            likeButton.classList.add('btn-danger');
+                        } else if (data.status === 'unliked') {
+                            likeButton.classList.remove('btn-danger');
+                            likeButton.classList.add('btn-outline-danger');
+                        }
+                        likesCountSpan.textContent = data.likes_count + ' Mi Piace';
+                    })
+                    .catch(error => {
+                        console.error('Errore nel toggle like:', error);
+                        alert('Si è verificato un errore nel mettere/togliere Mi Piace. Riprova.');
+                    });
+                });
+            }
+        });
+    </script>
+
+{% endblock %}

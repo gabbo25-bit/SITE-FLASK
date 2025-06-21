@@ -1,0 +1,78 @@
+{# templates/index.html (AGGIORNARE DOPO LA SEZIONE DEGLI ARTICOLI) #}
+
+{% extends 'base.html' %}
+
+{% block title %}Homepage{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4">Tutti gli Articoli</h1>
+    {% if query %}
+        <p class="lead">Risultati della ricerca per: "<strong>{{ query }}</strong>"</p>
+    {% endif %}
+    <div class="list-group">
+        {% for article in articles %}
+            <div class="list-group-item list-group-item-action mb-3 p-3">
+                <div class="row g-3">
+                    {% if article.image_filename %}
+                        <div class="col-md-4">
+                            <img src="{{ url_for('static', filename='uploads/' + article.image_filename) }}" class="img-fluid rounded-start" alt="{{ article.title }}" style="object-fit: cover; height: 150px; width: 100%;">
+                        </div>
+                        <div class="col-md-8">
+                    {% else %}
+                        <div class="col-md-12">
+                    {% endif %}
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">
+                                <a href="{{ url_for('article_detail', article_id=article.id) }}" class="text-decoration-none text-dark">{{ article.title }}</a>
+                            </h5>
+                            <small class="text-muted">{{ article.pub_date.strftime('%d/%m/%Y') }}</small>
+                        </div>
+                        <p class="mb-1">{{ (article.content | striptags)[:150] }}...</p>
+                        <small class="text-muted">
+                            Di <a href="{{ url_for('user_profile', username=article.author.username) }}">{{ article.author.username }}</a>
+                            | Visualizzazioni: {{ article.views }}
+                            {% if current_user.is_authenticated and (current_user == article.author or current_user.is_admin) %}
+                                | <a href="{{ url_for('edit_article', article_id=article.id) }}">Modifica</a>
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    {% if not articles and not query %}
+        <p class="text-muted">Nessun articolo ancora. <a href="{{ url_for('create') }}">Creane uno!</a></p>
+    {% elif not articles and query %}
+        <p class="text-muted">Nessun risultato trovato per la ricerca: "<strong>{{ query }}</strong>".</p>
+    {% endif %}
+
+    {# Controlli di Paginazione #}
+    {% if pagination.pages > 1 %}
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center mt-4">
+            <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('index', page=pagination.prev_num, q=query) }}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            {% for page_num in pagination.iter_pages(left_edge=2, right_edge=2, left_current=2, right_current=2) %}
+                {% if page_num %}
+                    {% if pagination.page == page_num %}
+                        <li class="page-item active"><a class="page-link" href="#">{{ page_num }}</a></li>
+                    {% else %}
+                        <li class="page-item"><a class="page-link" href="{{ url_for('index', page=page_num, q=query) }}">{{ page_num }}</a></li>
+                    {% endif %}
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+            <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('index', page=pagination.next_num, q=query) }}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
+
+{% endblock %}

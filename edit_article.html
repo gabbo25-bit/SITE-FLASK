@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Modifica Articolo: {{ article.title }}{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4">Modifica Articolo: {{ article.title }}</h1>
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-3">
+            <label for="title" class="form-label">Titolo:</label>
+            <input type="text" class="form-control" id="title" name="title" value="{{ article.title }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="content" class="form-label">Contenuto:</label>
+            {# Pre-popola la textarea con il contenuto esistente #}
+            <textarea class="form-control" id="content" name="content" rows="10" required>{{ article.content | safe }}</textarea>
+        </div>
+        <div class="mb-3">
+            <label for="image" class="form-label">Immagine (PNG, JPG, JPEG, GIF):</label>
+            <input type="file" class="form-control" id="image" name="image" accept="image/png, image/jpeg, image/gif">
+            {% if article.image_filename %}
+                <small class="form-text text-muted">Immagine attuale: <img src="{{ url_for('static', filename='uploads/' + article.image_filename) }}" alt="Immagine attuale" style="height: 50px; margin-left: 10px;"></small>
+                <br><small class="form-text text-muted">Carica una nuova immagine per sostituirla.</small>
+            {% else %}
+                <small class="form-text text-muted">Nessuna immagine caricata. Puoi aggiungerne una.</small>
+            {% endif %}
+        </div>
+        <button type="submit" class="btn btn-primary">Salva Modifiche</button>
+        <a href="{{ url_for('article_detail', article_id=article.id) }}" class="btn btn-secondary">Annulla</a>
+    </form>
+{% endblock %}

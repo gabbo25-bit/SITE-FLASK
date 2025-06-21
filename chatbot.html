@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Chatbot AI{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4">Chatbot AI (Powered by Gemini)</h1>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            La tua conversazione con l'AI
+        </div>
+        <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+            {% if response_text %}
+                <div class="alert alert-info" role="alert">
+                    <strong>AI:</strong> {{ response_text | safe }}
+                </div>
+            {% else %}
+                <p class="text-muted">Inizia la conversazione digitando un messaggio qui sotto.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('chatbot') }}">
+        <div class="input-group mb-3">
+            <input type="text" class="form-control" name="message" placeholder="Scrivi il tuo messaggio all'AI..." aria-label="Messaggio AI" required>
+            <button class="btn btn-primary" type="submit">Invia</button>
+        </div>
+        <small class="form-text text-muted">L'AI non ha memoria delle conversazioni precedenti per questa demo. Ogni messaggio è una nuova interazione.</small>
+    </form>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Modifica Profilo{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4">Modifica il Tuo Profilo</h1>
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-3">
+            <label for="username" class="form-label">Username:</label>
+            <input type="text" class="form-control" id="username" name="username" value="{{ user.username }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="email" class="form-label">Email:</label>
+            <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="bio" class="form-label">Bio:</label>
+            <textarea class="form-control" id="bio" name="bio" rows="5">{{ user.bio }}</textarea>
+        </div>
+        <div class="mb-3">
+            <label for="profile_picture" class="form-label">Immagine Profilo (PNG, JPG, JPEG, GIF):</label>
+            <input type="file" class="form-control" id="profile_picture" name="profile_picture" accept="image/png, image/jpeg, image/gif">
+            {% if user.profile_picture %}
+                <small class="form-text text-muted">Immagine profilo attuale: <img src="{{ url_for('static', filename='uploads/' + user.profile_picture) }}" alt="Immagine profilo attuale" class="rounded-circle ms-2" style="height: 40px; width: 40px; object-fit: cover;"></small>
+                <br><small class="form-text text-muted">Carica una nuova immagine per sostituirla.</small>
+            {% else %}
+                <small class="form-text text-muted">Nessuna immagine profilo. Puoi aggiungerne una.</small>
+            {% endif %}
+        </div>
+        <button type="submit" class="btn btn-primary">Salva Modifiche</button>
+        <a href="{{ url_for('user_profile', username=user.username) }}" class="btn btn-secondary">Annulla</a>
+    </form>
+{% endblock %}
